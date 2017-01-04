@@ -7,4 +7,18 @@ La idea es que la Korando sea mas lenta que los otros carros, pero:
 
 Multiplayer?
 
-Carros normales mas lentos en anden, etc?
+Carros normales mas lentos en andén, etc?
+
+TODO gameplay:
+- Camera móvil (mundo mas grande)
+- Mundos generados (l-system/tree)?
+
+
+TODO estético:
+- HUD (vida, puntos)
+- F1: Ayuda (controles)
+- Animación del movimiento del carro (ruedas)
+- Start screen
+- Humo animado, fuego animado
+- Explosiones animadas
+

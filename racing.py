@@ -15,7 +15,16 @@ from sys import argv,exit
 #--------------------------------
 
 #constants
+WIN_WIDTH = 1024
+WIN_HEIGHT = 768
+HALF_WIDTH = int(WIN_WIDTH / 2)
+HALF_HEIGHT = int(WIN_HEIGHT / 2)
+
+DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
+DEPTH = 32
+VIDEO_FLAGS = 0
 FRAMES_PER_SECOND = 30
+CAMERA_SLACK = 30
 
 #other variables
 RACINGGAME_ROOT = os.path.realpath(argv[0]).split('/')
@@ -39,7 +48,7 @@ clock = pygame.time.Clock()
 deltat = clock.tick(FRAMES_PER_SECOND)
 
 #for testing:
-screen = pygame.display.set_mode((1024,768))
+screen = pygame.display.set_mode(DISPLAY, VIDEO_FLAGS, DEPTH)
 
 #for gameplay
 #screen = pygame.display.set_mode((1024,768),FULLSCREEN, DOUBLEBUFF)
