@@ -76,7 +76,7 @@ class KorandoSprite(pygame.sprite.Sprite):
         self.last_coll = []
         self.rect = pygame.Rect(self.src_images[0].get_rect())
         self.rect.center = position
-    def update(self, deltat,collisions):
+    def update(self, game, deltat,collisions):
         # SIMULATION
         #print("speed : " + str(self.speed) + ", up: " + str(self.k_up) + ", down:  " + str(self.k_down) )
         for colider in collisions:
@@ -99,7 +99,15 @@ class KorandoSprite(pygame.sprite.Sprite):
             x, y = self.position
             rad = self.direction * math.pi / 180
             x += self.speed * math.sin(rad)
+            if x < 0:
+                x = 0
+            if x > game.level_width:
+                x = game.level_width
             y += self.speed * math.cos(rad)
+            if y < 0:
+                y = 0
+            if y > game.level_height:
+                y = game.level_height
             self.position = (x, y)
             self.image = pygame.transform.rotate(self.src_images[self.damage], self.direction)
             self.rect = self.image.get_rect()
@@ -227,8 +235,8 @@ def main():
         collisions = pygame.sprite.groupcollide(game.tree_group, game.korando_group, 0, 0)
         #print("collisions: " + str(collisions))
         game.tree_group.update(collisions)
-        game.korando_group.update(deltat,collisions)
-        game.korando_group.update(deltat,collisions)
+        game.korando_group.update(game,deltat,collisions)
+        game.korando_group.update(game,deltat,collisions)
     
         pygame.display.flip()
 
