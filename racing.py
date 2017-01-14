@@ -9,6 +9,7 @@ import os
 import random
 from sys import argv,exit
 
+from generate_world import *
 #--------------------------------
 #settings variables
 #--------------------------------
@@ -44,6 +45,8 @@ KORANDO_FIRE = FIGS + "korando_fire.png"
 KORANDO_SMOKE = FIGS + "korando_smoke.png"
 KORANDO_EXPLOSION = FIGS + "korando_explosion.png"
 
+STREET = FIGS + "street_square.png"
+SIDEWALK = FIGS + "sidewalk_square.png"
 TREE = FIGS + "tree.png"
 TREE_EXPLOSION = FIGS + "tree_explosion.png"
 
@@ -240,26 +243,55 @@ class TreeSprite(pygame.sprite.Sprite):
            self.image = self.hit
         else: self.image = self.normal
 
+class StreetSprite(pygame.sprite.Sprite):
+    def __init__(self, position):
+        self.image = pygame.image.load(STREET)
+        self.rect = pygame.Rect(self.image.get_rect())
+        self.rect.center = position
+        pygame.sprite.Sprite.__init__(self)
+
+class SidewalkSprite(pygame.sprite.Sprite):
+    def __init__(self, position):
+        self.image = pygame.image.load(SIDEWALK)
+        self.rect = pygame.Rect(self.image.get_rect())
+        self.rect.center = position
+        pygame.sprite.Sprite.__init__(self)
+
 #--------------------------------
 # other game classes
 #--------------------------------
 class GameInstance:
     def __init__(self,screen):
         self.controls = Controls()
-        self.korando = KorandoSprite(FIGS + 'korando.png', screen.get_rect().center)
-        self.korando_group = pygame.sprite.RenderPlain(self.korando)
-        
-        self.level_height = random.randint(WIN_HEIGHT,MAX_WORLD_SIZE_MULTIPLIER * WIN_HEIGHT)
-        self.level_width = random.randint(WIN_WIDTH,MAX_WORLD_SIZE_MULTIPLIER * WIN_WIDTH)
-        self.num_trees = random.randint(3,11) * int(self.level_width/WIN_WIDTH)* int(self.level_height/WIN_HEIGHT)
+        self.world = World()
+        self.world.generate_stepwise()
+        self.level_height = self.world.WORLD_HEIGHT * 100
+        self.level_width = self.world.WORLD_WIDTH * 100
         self.entities = pygame.sprite.Group()
         self.tree_group = pygame.sprite.Group()
+        for j in range(self.world.WORLD_HEIGHT):
+            for i in range(self.world.WORLD_WIDTH):
+                x = i * 100
+                y = j * 100
+                if  self.world.p(i,j) == 'T':
+                    tree = TreeSprite((x,y))
+                    self.entities.add(tree)
+                    self.tree_group.add(tree)
+                elif self.world.p(i,j) == '=':
+                    street = StreetSprite((x,y))
+                    self.entities.add(street)
+                elif self.world.p(i,j) == 'S':
+                    sidewalk = SidewalkSprite((x,y))
+                    self.entities.add(sidewalk)
+
+                              
+        i,j = self.world.init_pos
+        x = i * 100
+        y = j * 100
+        self.korando = KorandoSprite(FIGS + 'korando.png', (x,y))
+        self.korando_group = pygame.sprite.RenderPlain(self.korando)
         self.entities.add(self.korando)
-        for i in range(self.num_trees):
-            x,y = random.randint(0,self.level_height), random.randint(0,self.level_width)
-            tree = TreeSprite((x,y))
-            self.entities.add(tree)
-            self.tree_group.add(tree)
+        
         
         #self.tree_group = pygame.sprite.RenderPlain(*self.trees)
          
@@ -335,6 +367,9 @@ def main():
         camera.update(game.korando)
         for e in game.entities:
             screen.blit(e.image, camera.apply(e))
+
+        # hack: get korando always on top (should get a good method to decide this for more complex interactions)
+        screen.blit(game.korando.image, camera.apply(game.korando)) 
     
         if restart == True:
             game.clear_game(screen,background)

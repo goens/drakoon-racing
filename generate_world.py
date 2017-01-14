@@ -24,6 +24,9 @@ class World():
         self.world = dict()
         self.init_pos = (0,0)
     
+    def p(self,i,j):
+        return self.world[(i,j)]
+
     def generate_full_random():
         for j in range(self.WORLD_HEIGHT):
             for i in range(self.WORLD_WIDTH):
@@ -140,9 +143,9 @@ class World():
 
         
                 
-
-world = World()
-world.generate_stepwise()
-print(world.get_string())
-print("init pos: " + str(world.init_pos))
+if __name__ == "__main__":
+    world = World()
+    world.generate_stepwise()
+    print(world.get_string())
+    print("init pos: " + str(world.init_pos))
 
