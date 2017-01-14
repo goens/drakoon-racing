@@ -13,6 +13,10 @@ from sys import argv,exit
 #settings variables
 #--------------------------------
 
+TURN_RATE = 4
+MAX_FORWARD_SPEED = 8
+MAX_REVERSE_SPEED = -3
+
 #constants
 WIN_WIDTH = 1024
 WIN_HEIGHT = 768
@@ -100,13 +104,13 @@ class Controls():
 
         dif_dir = (self.direction - in_dir) % 360
         #print("dif dir: " + str(dif_dir))
-        if dif_dir >= 358 or dif_dir <= 2:
+        if dif_dir >= (360 - TURN_RATE) or dif_dir <= (TURN_RATE):
             self.direction = in_dir
         else:
             if dif_dir < 180:
-                self.direction -= 2
+                self.direction -= TURN_RATE
             else:
-                self.direction += 2
+                self.direction += TURN_RATE
                 
         if self.spacebar > 0:
             self.acceleration = max(-1, self.acceleration - 0.3)
@@ -115,14 +119,12 @@ class Controls():
             #print("norm: " + str(euclidean_norm))
             self.acceleration += abs(euclidean_norm - 1)
 
-        print("acceleration: " + str(self.acceleration))
+        #print("acceleration: " + str(self.acceleration))
 
     def get_direction(self):
-        self.update()
         return self.direction
 
     def get_changes(self):
-        self.update()
         return self._get_changes()
 
     def _get_changes(self):
@@ -131,8 +133,9 @@ class Controls():
         y = math.cos(rad)
         return x,y
     def get_acceleration(self):
-        self.update()
         return self.acceleration
+    def get_speed(self):
+        return self.speed
 
     def __init__(self):
         self.k_left = 0
@@ -142,6 +145,7 @@ class Controls():
         self.spacebar = 0
         self.acceleration = 0
         self.direction = 0
+        self.speed = 0
         #TODO: something like self.update_fun = update_relative_controls
 
     def update(self):
@@ -150,13 +154,16 @@ class Controls():
             self.acceleration = self.acceleration / abs(self.acceleration) * MAX_ACCELERATION
         #self.update_relative_controls()
         self.update_absolute_controls()
+        self.speed += self.acceleration * 0.5
+        if self.speed > MAX_FORWARD_SPEED:
+            self.speed = MAX_FORWARD_SPEED
+        if self.speed < MAX_REVERSE_SPEED:
+            self.speed = MAX_REVERSE_SPEED
 #--------------------------------
 # sprite classes
 #--------------------------------
 
 class KorandoSprite(pygame.sprite.Sprite):
-    MAX_FORWARD_SPEED = 8
-    MAX_REVERSE_SPEED = -3
     MAX_DAMAGE = 3
     TURN_SPEED = 5
 
@@ -193,12 +200,9 @@ class KorandoSprite(pygame.sprite.Sprite):
 
         if self.damage < self.MAX_DAMAGE:
             #print("damage: " + str(self.damage))
+            game.controls.update()
             self.acceleration = game.controls.get_acceleration() 
-            self.speed += self.acceleration * 0.5
-            if self.speed > self.MAX_FORWARD_SPEED:
-                self.speed = self.MAX_FORWARD_SPEED
-            if self.speed < self.MAX_REVERSE_SPEED:
-                self.speed = self.MAX_REVERSE_SPEED
+            self.speed = game.controls.get_speed()
             self.direction = game.controls.get_direction()
             x, y = self.position
             dx, dy = game.controls.get_changes()
