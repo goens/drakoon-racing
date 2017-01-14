@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 #--------------------------------
 #imports
 #--------------------------------
@@ -46,6 +45,111 @@ TREE_EXPLOSION = FIGS + "tree_explosion.png"
 
 BACKGROUND = FIGS + 'background.png'
 
+MAX_ACCELERATION = 5
+class Controls():
+
+    def update_relative_controls(self):
+        self.direction += self.k_right - self.k_left
+        self.acceleration += self.k_up - self.k_down
+        
+    def update_absolute_controls(self):
+        in_x, in_y =  self.k_right - self.k_left, self.k_up - self.k_down
+        #print("in: (" + str(in_x) + ", " + str(in_y) + ")")
+        accel_percentage = self.acceleration / MAX_ACCELERATION
+        cur_x, cur_y = self._get_changes()
+        diff_x = cur_x + in_x
+        diff_y = cur_y + in_y
+        
+        #    Input interpretation
+        #        +1 (y)
+        # (x) -1    +1 (x)
+        #        -1 (y)
+
+        #  Direction interpretation (deg)
+        #       180
+        #    90     270
+        #        0
+
+        if in_x == 0 and in_y == 0:
+            in_dir = self.direction
+        elif in_x == 0 and in_y > 0:
+            in_dir = 180
+        elif in_x == 0 and in_y < 0:
+            in_dir = 0
+        elif in_x < 0 and in_y == 0:
+            in_dir = 270
+        elif in_x > 0 and in_y == 0:
+            in_dir = 90
+                
+        else:
+            in_dir = 180 / math.pi * math.acos(-in_y/math.sqrt(in_x*in_x + in_y * in_y))
+            if in_x < 0:
+                in_dir *= -1
+
+            #              ^
+            #              |  cos(a) = in . (-e_y) / (||in|| ||-e_y||)
+            #              |         = -in_y  / sqrt(in_x^2 + in_y^2)
+            #              |
+            #              |
+            #     ---------+---------->
+            #            /a| |
+            #           /  | | -y_in
+            #          /___| |
+            #              |
+            #        -x_in 
+
+        dif_dir = (self.direction - in_dir) % 360
+        #print("dif dir: " + str(dif_dir))
+        if dif_dir >= 358 or dif_dir <= 2:
+            self.direction = in_dir
+        else:
+            if dif_dir < 180:
+                self.direction -= 2
+            else:
+                self.direction += 2
+                
+        if self.spacebar > 0:
+            self.acceleration = max(-1, self.acceleration - 0.3)
+        else:
+            euclidean_norm = math.sqrt( diff_x * diff_x + diff_y * diff_y) # \in [0,2]
+            #print("norm: " + str(euclidean_norm))
+            self.acceleration += abs(euclidean_norm - 1)
+
+        print("acceleration: " + str(self.acceleration))
+
+    def get_direction(self):
+        self.update()
+        return self.direction
+
+    def get_changes(self):
+        self.update()
+        return self._get_changes()
+
+    def _get_changes(self):
+        rad = self.direction * math.pi / 180
+        x = math.sin(rad)
+        y = math.cos(rad)
+        return x,y
+    def get_acceleration(self):
+        self.update()
+        return self.acceleration
+
+    def __init__(self):
+        self.k_left = 0
+        self.k_right = 0 
+        self.k_down = 0 
+        self.k_up = 0
+        self.spacebar = 0
+        self.acceleration = 0
+        self.direction = 0
+        #TODO: something like self.update_fun = update_relative_controls
+
+    def update(self):
+        self.direction = self.direction % 360
+        if abs(self.acceleration) > MAX_ACCELERATION:
+            self.acceleration = self.acceleration / abs(self.acceleration) * MAX_ACCELERATION
+        #self.update_relative_controls()
+        self.update_absolute_controls()
 #--------------------------------
 # sprite classes
 #--------------------------------
@@ -89,21 +193,22 @@ class KorandoSprite(pygame.sprite.Sprite):
 
         if self.damage < self.MAX_DAMAGE:
             #print("damage: " + str(self.damage))
-            self.acceleration = (self.k_up - self.k_down)
+            self.acceleration = game.controls.get_acceleration() 
             self.speed += self.acceleration * 0.5
             if self.speed > self.MAX_FORWARD_SPEED:
                 self.speed = self.MAX_FORWARD_SPEED
             if self.speed < self.MAX_REVERSE_SPEED:
                 self.speed = self.MAX_REVERSE_SPEED
-            self.direction += (self.k_right - self.k_left)
+            self.direction = game.controls.get_direction()
             x, y = self.position
-            rad = self.direction * math.pi / 180
-            x += self.speed * math.sin(rad)
+            dx, dy = game.controls.get_changes()
+            #print("changes: (" + str(dx) + ", " + str(dy))
+            x += self.speed * dx
+            y += self.speed * dy
             if x < 0:
                 x = 0
             if x > game.level_width:
                 x = game.level_width
-            y += self.speed * math.cos(rad)
             if y < 0:
                 y = 0
             if y > game.level_height:
@@ -112,6 +217,7 @@ class KorandoSprite(pygame.sprite.Sprite):
             self.image = pygame.transform.rotate(self.src_images[self.damage], self.direction)
             self.rect = self.image.get_rect()
             self.rect.center = self.position
+        #print("direction: " + str(self.direction)
 
 class TreeSprite(pygame.sprite.Sprite):
     normal = pygame.image.load(TREE)
@@ -135,6 +241,7 @@ class TreeSprite(pygame.sprite.Sprite):
 #--------------------------------
 class GameInstance:
     def __init__(self,screen):
+        self.controls = Controls()
         self.korando = KorandoSprite(FIGS + 'korando.png', screen.get_rect().center)
         self.korando_group = pygame.sprite.RenderPlain(self.korando)
         
@@ -211,10 +318,11 @@ def main():
         for event in pygame.event.get():
             if not hasattr(event, 'key'): continue
             down = event.type == pygame.KEYDOWN
-            if event.key == pygame.K_RIGHT: game.korando.k_right = down * 5
-            elif event.key == pygame.K_LEFT: game.korando.k_left = down * 5
-            elif event.key == pygame.K_UP: game.korando.k_up = down * 2
-            elif event.key == pygame.K_DOWN: game.korando.k_down = down * 2
+            if event.key == pygame.K_RIGHT: game.controls.k_right = down 
+            elif event.key == pygame.K_LEFT: game.controls.k_left = down
+            elif event.key == pygame.K_UP: game.controls.k_up = down 
+            elif event.key == pygame.K_DOWN: game.controls.k_down = down
+            elif event.key == pygame.K_SPACE: game.controls.spacebar = down
             elif event.key == pygame.K_DELETE: exit(0)
             elif event.key == pygame.K_r and event.type == pygame.KEYUP: restart = True
     
