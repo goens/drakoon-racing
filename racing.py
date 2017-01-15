@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 #--------------------------------
 #imports
@@ -10,41 +10,7 @@ import os
 import random
 from sys import argv,exit
 
-#--------------------------------
-#settings variables
-#--------------------------------
-
-#constants
-WIN_WIDTH = 1024
-WIN_HEIGHT = 768
-HALF_WIDTH = int(WIN_WIDTH / 2)
-HALF_HEIGHT = int(WIN_HEIGHT / 2)
-
-DISPLAY = (WIN_WIDTH, WIN_HEIGHT)
-DEPTH = 32
-VIDEO_FLAGS = 0
-FRAMES_PER_SECOND = 30
-CAMERA_SLACK = 30
-
-MAX_WORLD_SIZE_MULTIPLIER = 5
-
-TITLE_STRING = " Drakoon Racing!"
-
-#other variables
-RACINGGAME_ROOT = os.path.realpath(argv[0]).split('/')
-RACINGGAME_ROOT.pop(-1)
-RACINGGAME_ROOT = "/".join(RACINGGAME_ROOT)
-FIGS = RACINGGAME_ROOT + "/figs/"
-
-KORANDO = FIGS + "korando.png"
-KORANDO_FIRE = FIGS + "korando_fire.png"
-KORANDO_SMOKE = FIGS + "korando_smoke.png"
-KORANDO_EXPLOSION = FIGS + "korando_explosion.png"
-
-TREE = FIGS + "tree.png"
-TREE_EXPLOSION = FIGS + "tree_explosion.png"
-
-BACKGROUND = FIGS + 'background.png'
+import settings
 
 #--------------------------------
 # sprite classes
@@ -61,7 +27,7 @@ class KorandoSprite(pygame.sprite.Sprite):
 
         pygame.sprite.Sprite.__init__(self)
         self.src_images = []
-        for img in [KORANDO, KORANDO_SMOKE, KORANDO_FIRE, KORANDO_EXPLOSION]: 
+        for img in [settings.KORANDO, settings.KORANDO_SMOKE, settings.KORANDO_FIRE, settings.KORANDO_EXPLOSION]: 
             self.src_images.append(pygame.image.load(img))
         self.image = self.src_images[0]
         self.position = position
@@ -114,8 +80,8 @@ class KorandoSprite(pygame.sprite.Sprite):
             self.rect.center = self.position
 
 class TreeSprite(pygame.sprite.Sprite):
-    normal = pygame.image.load(TREE)
-    hit = pygame.image.load(TREE_EXPLOSION)
+    normal = pygame.image.load(settings.TREE)
+    hit = pygame.image.load(settings.TREE_EXPLOSION)
     was_hit = False
     def __init__(self, position):
         self.rect = pygame.Rect(self.normal.get_rect())
@@ -135,12 +101,12 @@ class TreeSprite(pygame.sprite.Sprite):
 #--------------------------------
 class GameInstance:
     def __init__(self,screen):
-        self.korando = KorandoSprite(FIGS + 'korando.png', screen.get_rect().center)
+        self.korando = KorandoSprite(settings.KORANDO, screen.get_rect().center)
         self.korando_group = pygame.sprite.RenderPlain(self.korando)
         
-        self.level_height = random.randint(WIN_HEIGHT,MAX_WORLD_SIZE_MULTIPLIER * WIN_HEIGHT)
-        self.level_width = random.randint(WIN_WIDTH,MAX_WORLD_SIZE_MULTIPLIER * WIN_WIDTH)
-        self.num_trees = random.randint(3,11) * int(self.level_width/WIN_WIDTH)* int(self.level_height/WIN_HEIGHT)
+        self.level_height = random.randint(settings.WIN_HEIGHT,settings.MAX_WORLD_SIZE_MULTIPLIER * settings.WIN_HEIGHT)
+        self.level_width = random.randint(settings.WIN_WIDTH,settings.MAX_WORLD_SIZE_MULTIPLIER * settings.WIN_WIDTH)
+        self.num_trees = random.randint(3,11) * int(self.level_width/settings.WIN_WIDTH)* int(self.level_height/settings.WIN_HEIGHT)
         self.entities = pygame.sprite.Group()
         self.tree_group = pygame.sprite.Group()
         self.entities.add(self.korando)
@@ -173,16 +139,16 @@ class Camera(object):
 def simple_camera(camera, target_rect):
     l, t, _, _ = target_rect
     _, _, w, h = camera
-    return Rect(-l+HALF_WIDTH, -t+HALF_HEIGHT, w, h)
+    return Rect(-l+settings.HALF_WIDTH, -t+settings.HALF_HEIGHT, w, h)
 
 def complex_camera(camera, target_rect):
     l, t, _, _ = target_rect
     _, _, w, h = camera
-    l, t, _, _ = -l+HALF_WIDTH, -t+HALF_HEIGHT, w, h
+    l, t, _, _ = -l+settings.HALF_WIDTH, -t+settings.HALF_HEIGHT, w, h
 
     l = min(0, l)                           # stop scrolling at the left edge
-    l = max(-(camera.width-WIN_WIDTH), l)   # stop scrolling at the right edge
-    t = max(-(camera.height-WIN_HEIGHT), t) # stop scrolling at the bottom
+    l = max(-(camera.width-settings.WIN_WIDTH), l)   # stop scrolling at the right edge
+    t = max(-(camera.height-settings.WIN_HEIGHT), t) # stop scrolling at the bottom
     t = min(0, t)                           # stop scrolling at the top
     return pygame.Rect(l, t, w, h)
 
@@ -191,13 +157,13 @@ def complex_camera(camera, target_rect):
 #--------------------------------
 def main():
     clock = pygame.time.Clock()
-    deltat = clock.tick(FRAMES_PER_SECOND)
+    deltat = clock.tick(settings.FRAMES_PER_SECOND)
     
     #for testing:
-    screen = pygame.display.set_mode(DISPLAY, VIDEO_FLAGS, DEPTH)
+    screen = pygame.display.set_mode(settings.DISPLAY, settings.VIDEO_FLAGS, settings.DEPTH)
         
-    pygame.display.set_caption(TITLE_STRING)
-    background = pygame.image.load(BACKGROUND)
+    pygame.display.set_caption(settings.TITLE_STRING)
+    background = pygame.image.load(settings.BACKGROUND)
     screen.blit(background, (0,0))
     rect = screen.get_rect()
     
