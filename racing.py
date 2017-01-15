@@ -10,6 +10,7 @@ import random
 from sys import argv,exit
 
 import settings
+import intro
 from generate_world import *
 #--------------------------------
 #settings variables
@@ -109,7 +110,7 @@ class Controls():
         self.k_up = 0
         self.spacebar = 0
         self.acceleration = 0
-        self.direction = 0
+        self.direction = 90
         self.speed = 0
         #TODO: something like self.update_fun = update_relative_controls
 
@@ -295,6 +296,7 @@ def complex_camera(camera, target_rect):
 # main loop
 #--------------------------------
 def main():
+    intro.main()
     clock = pygame.time.Clock()
     deltat = clock.tick(settings.FRAMES_PER_SECOND)
     
