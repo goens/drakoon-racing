@@ -142,6 +142,7 @@ class KorandoSprite(pygame.sprite.Sprite):
             self.src_images.append(pygame.image.load(img))
         self.image = self.src_images[0]
         self.position = position
+        self.moving = True 
         self.speed = 0 
         self.acceleration = 0 
         self.direction = 0
@@ -153,22 +154,35 @@ class KorandoSprite(pygame.sprite.Sprite):
         self.last_coll = []
         self.rect = pygame.Rect(self.src_images[0].get_rect())
         self.rect.center = position
-    def update(self, game, deltat,collisions):
+    def update(self, game, deltat):
         # SIMULATION
         #print("speed : " + str(self.speed) + ", up: " + str(self.k_up) + ", down:  " + str(self.k_down) )
-        for colider in collisions:
-          if self in collisions[colider] and colider not in self.last_coll:
+
+        tree_collisions = pygame.sprite.groupcollide(game.tree_group, game.korando_group, 0, 0)
+        street_collisions = pygame.sprite.groupcollide(game.street_group, game.korando_group, 0, 0)
+        sidewalk_collisions = pygame.sprite.groupcollide(game.sidewalk_group, game.korando_group, 0, 0)
+        #print("collisions: " + str(collisions))
+        for colider in tree_collisions:
+          if self in tree_collisions[colider] and colider not in self.last_coll:
             self.damage += 1
             self.last_coll.append(colider)
             if self.damage >= self.MAX_DAMAGE:
                 self.damage = self.MAX_DAMAGE
                 self.image = pygame.transform.rotate(self.src_images[self.damage], self.direction)
+        if self.damage >= self.MAX_DAMAGE:
+            self.moving = False
 
-        if self.damage < self.MAX_DAMAGE:
+        speed_factor = 1
+        if street_collisions == {}: #not on the street
+            speed_factor *= 0.6
+            if sidewalk_collisions == {}: #neither on the sidewalk
+              speed_factor *= 0.6
+
+        if self.moving == True: 
             #print("damage: " + str(self.damage))
             game.controls.update()
             self.acceleration = game.controls.get_acceleration() 
-            self.speed = game.controls.get_speed()
+            self.speed = game.controls.get_speed() * speed_factor
             self.direction = game.controls.get_direction()
             x, y = self.position
             dx, dy = game.controls.get_changes()
@@ -198,13 +212,22 @@ class TreeSprite(pygame.sprite.Sprite):
         self.rect.center = position
         self.image = self.normal
         pygame.sprite.Sprite.__init__(self)
-    def update(self, hit_list):
+    def update(self, game):
         #print(str(hit_list))
+        hit_list = pygame.sprite.groupcollide(game.tree_group, game.korando_group, 0, 0)
+        #print("collisions: " + str(collisions))
         if self in hit_list:
            self.was_hit = True
         if self.was_hit:
            self.image = self.hit
         else: self.image = self.normal
+
+class GoalSprite(pygame.sprite.Sprite):
+    def __init__(self, position):
+        self.image = pygame.image.load(settings.GOAL)
+        self.rect = pygame.Rect(self.image.get_rect())
+        self.rect.center = position
+        pygame.sprite.Sprite.__init__(self)
 
 class StreetSprite(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -232,6 +255,9 @@ class GameInstance:
         self.level_width = self.world.WORLD_WIDTH * 100
         self.entities = pygame.sprite.Group()
         self.tree_group = pygame.sprite.Group()
+        self.street_group = pygame.sprite.Group()
+        self.goal_group = pygame.sprite.Group()
+        self.sidewalk_group = pygame.sprite.Group()
         for j in range(self.world.WORLD_HEIGHT):
             for i in range(self.world.WORLD_WIDTH):
                 x = i * 100
@@ -243,9 +269,16 @@ class GameInstance:
                 elif self.world.p(i,j) == '=':
                     street = StreetSprite((x,y))
                     self.entities.add(street)
+                    self.street_group.add(street)
+                elif self.world.p(i,j) == 'G':
+                    street = GoalSprite((x,y))
+                    self.entities.add(street)
+                    self.street_group.add(street)
+                    self.goal_group.add(street)
                 elif self.world.p(i,j) == 'S':
                     sidewalk = SidewalkSprite((x,y))
                     self.entities.add(sidewalk)
+                    self.sidewalk_group.add(sidewalk)
 
                               
         i,j = self.world.init_pos
@@ -327,7 +360,7 @@ def main():
             elif event.key == pygame.K_r and event.type == pygame.KEYUP: restart = True
     
         # rendering
-        screen.blit(background, (0,0))
+        screen.blit(background, (0,0)) #is this too inefficient?
         camera.update(game.korando)
         for e in game.entities:
             screen.blit(e.image, camera.apply(e))
@@ -343,11 +376,8 @@ def main():
             camera = Camera(complex_camera, game.level_width, game.level_height)
             restart = False
     
-        collisions = pygame.sprite.groupcollide(game.tree_group, game.korando_group, 0, 0)
-        #print("collisions: " + str(collisions))
-        game.tree_group.update(collisions)
-        game.korando_group.update(game,deltat,collisions)
-        game.korando_group.update(game,deltat,collisions)
+        game.tree_group.update(game)
+        game.korando_group.update(game,deltat)
     
         pygame.display.flip()
 

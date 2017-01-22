@@ -34,12 +34,21 @@ RACING_IMG = os.path.join(FIGS, 'racing.png')
 TREE = os.path.join(FIGS,"tree.png")
 TREE_EXPLOSION = os.path.join(FIGS,"tree_explosion.png")
 STREET = os.path.join(FIGS,"street_square.png")
+GOAL = os.path.join(FIGS,"goal_square.png")
 SIDEWALK = os.path.join(FIGS,"sidewalk_square.png")
 
 BACKGROUND = os.path.join(FIGS,'background.png')
 
-TURN_RATE = 4
+TURN_RATE = 6
 
-MAX_FORWARD_SPEED = 8
+STREET_WIDTH = 2
+WORLD_WIDTH = 160
+WORLD_HEIGHT = 25
+PROB_STEP = 0.025
+PROB_CONTINUE = 0.8
+PROB_CHANGE = 0.2
+
+MAX_FORWARD_SPEED = 16
 MAX_REVERSE_SPEED = -3
 MAX_ACCELERATION = 5
+

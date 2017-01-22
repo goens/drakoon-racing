@@ -6,9 +6,24 @@ from math import sin
 
 import settings
 
+class Text():
+    def __init__(self, text, size, color, position):
+
+        self.font = pygame.font.SysFont("Arial", size)
+        self.text_surface = self.font.render(text, 1, color)
+        self.rect = self.text_surface.get_rect()
+        self.pos = position
+        x, y = position
+        self.rect.x = x
+        self.rect.y = y
+
+        
+
+
 def main():
     #initialize and setup screen
     pygame.init()
+    pygame.font.init() 
     screen = pygame.display.set_mode(settings.DISPLAY, pygame.HWSURFACE|pygame.DOUBLEBUF)
 
     #load images and scale
@@ -38,6 +53,10 @@ def main():
     xblocks = range(0, settings.WIN_WIDTH, 20)
     yblocks = range(0, settings.WIN_HEIGHT , 20)
     stopevents = pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN
+    top_left_position = (int(settings.WIN_WIDTH*0.1),int(settings.WIN_HEIGHT*0.1)) 
+    press_to_start = Text("Press any key to start.", 30, pygame.Color(230,30,15,0),top_left_position)
+    time_count = 0
+
     while 1:
         for e in pygame.event.get():
             if e.type in stopevents:
@@ -54,6 +73,17 @@ def main():
             racing_accel = 0
             racing_speed = 0
             racing_pos = settings.RACING_END_POSITION_OFFSET
+
+            time_count = (time_count + 1) % 40
+
+
+            if reached == True:
+                if time_count < 20:
+                    screen.blit(press_to_start.text_surface,press_to_start.pos)
+                else:
+                    screen.blit(drakoon_image, (0,0))
+
+
 
         racing_speed += racing_accel * deltat
         racing_pos = (racing_pos[0] + int(racing_speed * deltat), racing_pos[1])
