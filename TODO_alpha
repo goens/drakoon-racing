@@ -1,0 +1,5 @@
+For my first alpha:
+ - Clean-up code a bit more: separate objects into files, make sure the rendering is done well.
+ - Add some proper text classes for an HUD and winning, game over, etc. Bonus: make a 'velocimetro' (rotating graphics)
+ - Add a very simple AI that keeps on the street and is slightly slower than you on the street.
+ - Add basic sound FXs (and music?). In particular, "brrrm" at intro, motor all the time during play (different sounds perhaps) and some trumpets if you win.
